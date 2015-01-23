@@ -3,6 +3,7 @@ package csci_442_image_processing;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.ColorModel;
 import java.io.File;
 import java.awt.image.PixelGrabber;
 import java.awt.image.MemoryImageSource;
@@ -19,7 +20,27 @@ class IMP implements MouseListener {
     ImageIcon img;
     int colorX, colorY;
     int[] pixels;
+    byte[] bytePixels;
     int[] results;
+
+    byte[][] mask = {
+        {-1, -1, -1},
+        {-1, 8, -1},
+        {-1, -1, -1}
+    };
+
+    byte[][] betterMask = {
+        {-1, -1, -1, -1, -1},
+        {-1, 0, 0, 0, -1},
+        {-1, 0, 16, 0, -1},
+        {-1, 0, 0, 0, -1},
+        {-1, -1, -1, -1, -1},};
+    byte[][] laplace = {
+        {-1, -1, -1, -1, -1},
+        {-1, -1, -1, -1, -1},
+        {-1, -1, 24, -1, -1},
+        {-1, -1, -1, -1, -1},
+        {-1, -1, -1, -1, -1},};
    //Instance Fields you will be using below
 
     //This will be your height and width of your 2d array
@@ -110,6 +131,33 @@ class IMP implements MouseListener {
         });
 
         fun.add(secondItem);
+
+        JMenuItem thirdItem = new JMenuItem("RGB to Grayscale");
+        thirdItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                rgbToGrayLuminosity();
+            }
+        });
+
+        fun.add(thirdItem);
+
+        JMenuItem fourthItem = new JMenuItem("Edge Detection");
+        fourthItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                edgeDetection();
+            }
+        });
+
+        fun.add(fourthItem);
+
+        JMenuItem fifthItem = new JMenuItem("Better Edge Detection");
+        fifthItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                betterEdgeDetection();
+            }
+        });
+
+        fun.add(fifthItem);
 
         return fun;
 
@@ -203,10 +251,27 @@ class IMP implements MouseListener {
         mp.revalidate();
 
     }
+
+//    private void resetBytePicture() {
+//        bytePixels = new byte[height * width];
+//        for (int i = 0; i < height; i++) {
+//            for (int j = 0; j < width; j++) {
+//                bytePixels[i * width + j] = grayPic[i][j];
+//            }
+//        }
+//        ColorModel cm = ColorModel.getRGBdefault();
+//        Image img2 = toolkit.createImage(new MemoryImageSource(width, height, cm, bytePixels, 0, width));
+//
+//        JLabel label2 = new JLabel(new ImageIcon(img2));
+//        mp.removeAll();
+//        mp.add(label2);
+//
+//        mp.revalidate();
+//
+//    }
     /*
      * This method takes a single integer value and breaks it down doing bit manipulation to 4 individual int values for A, R, G, and B values
      */
-
     private int[] getPixelArray(int pixel) {
         int temp[] = new int[4];
         temp[0] = (pixel >> 24) & 0xff;
@@ -238,8 +303,8 @@ class IMP implements MouseListener {
      * when the corresponding pulldown menu is used. As long as you have a
      * picture open first the when your fun1, fun2, fun....etc method is called
      * you will have a 2D array called picture that is holding each pixel from
-     * your picture. 
-   ************************************************************************************************
+     * your picture.
+     * ***********************************************************************************************
      */
     /*
      * Example function that just removes all red values from the picture. 
@@ -256,12 +321,120 @@ class IMP implements MouseListener {
                 int rgbArray[] = new int[4];
 
                 rgbArray = getPixelArray(picture[i][j]);
-          //picture[i][j] = changePixels(picture[i][j]);
+                //picture[i][j] = changePixels(picture[i][j]);
 
                 rgbArray[1] = 0;
                 picture[i][j] = getPixels(rgbArray);
             }
         }
+        resetPicture();
+    }
+
+    private void rgbToGrayLuminosity() {
+        grayPic = new byte[height][width];
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int rgbArray[] = new int[4];
+
+                rgbArray = getPixelArray(picture[i][j]);
+
+                //apply luminosity equation and move into byte array
+                byte grayPix = (byte) (0.21 * rgbArray[1] + 0.72 * rgbArray[2] + 0.07 * rgbArray[3]);
+                grayPic[i][j] = grayPix;
+//                int[] newPixel = {grayPix, grayPix, grayPix,grayPix};
+//                picture[i][j] = getPixels(newPixel);
+                picture[i][j] = grayPix * 0x00010101;
+            }
+
+        }
+        resetPicture();
+    }
+
+    private void edgeDetection() {
+        rgbToGrayLuminosity();
+        int sum = 0;
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                sum = 0;
+//        for (int i = 0; i < height; i += 3) {
+//            for (int j = 0; j < width; j+= 3) {
+                if (i == 0 || j == 0 || j == width - 1 || i == height - 1) {
+//                    grayPic[i][j] = 0;
+                    sum = 0;
+                } else {
+                    int x = 0;
+                    for (int a = i - 1; a < i + 2; a++) {
+                        int y = 0;
+                        for (int b = j - 1; b < j + 2; b++) {
+//                            if (a == i && b == j) {
+//                                grayPic[a][b] = (byte) (grayPic[a][b] * (byte) 8);
+//                            } else {
+//                                grayPic[a][b] = (byte) (grayPic[a][b] * (byte) -1);
+//                            }
+                            sum = sum + grayPic[a][b] * mask[x][y];
+                            y++;
+                        }
+                        x++;
+                    }
+                }
+
+                if (sum > 255) {
+                    sum = 255;
+                }
+                if (sum < 0) {
+                    sum = 0;
+                }
+                byte bSum = (byte) sum;
+
+                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
+//                System.out.println(sum);
+            }
+        }
+
+//        try {
+//            Thread.sleep(1000);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+        resetPicture();
+    }
+
+    private void betterEdgeDetection() {
+        rgbToGrayLuminosity();
+
+        int sum = 0;
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                sum = 0;
+                if (i == 0 || j == 0 || j == width - 1 || i == height - 1 || i == 1 || i == height - 2 || j == 1 || j == width - 2) {
+                    sum=0;
+                } else {
+                    int x = 0;
+                    for (int a = i - 2; a < i + 3; a++) {
+                        int y = 0;
+                        for (int b = j - 2; b < j + 3; b++) {
+                            sum = sum + grayPic[a][b] * laplace[x][y];
+                            y++;
+                        }
+                        x++;
+                    }
+                }
+
+                if (sum > 255) {
+                    sum = 255;
+                }
+                if (sum < 0) {
+                    sum = 0;
+                }
+                byte bSum = (byte) sum;
+
+                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
+            }
+        }
+
         resetPicture();
     }
 
@@ -294,17 +467,6 @@ class IMP implements MouseListener {
      * fun5
      */
     private void fun5() {
-    }
-
-    private void rgbToGrayLuminosity() {
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                int rgbArray[] = new int[4];
-
-                rgbArray = getPixelArray(picture[i][j]);
-                //apply luminosity equation and move into byte array
-            }
-        }
     }
 
     private void quit() {
