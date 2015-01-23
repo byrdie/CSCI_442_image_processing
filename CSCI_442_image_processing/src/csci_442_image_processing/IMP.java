@@ -158,6 +158,15 @@ class IMP implements MouseListener {
         });
 
         fun.add(fifthItem);
+        
+        JMenuItem sixthItem = new JMenuItem("Green Color Tracking");
+        sixthItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                greenColorTracking();
+            }
+        });
+
+        fun.add(sixthItem);
 
         return fun;
 
@@ -358,21 +367,13 @@ class IMP implements MouseListener {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 sum = 0;
-//        for (int i = 0; i < height; i += 3) {
-//            for (int j = 0; j < width; j+= 3) {
                 if (i == 0 || j == 0 || j == width - 1 || i == height - 1) {
-//                    grayPic[i][j] = 0;
                     sum = 0;
                 } else {
                     int x = 0;
                     for (int a = i - 1; a < i + 2; a++) {
                         int y = 0;
                         for (int b = j - 1; b < j + 2; b++) {
-//                            if (a == i && b == j) {
-//                                grayPic[a][b] = (byte) (grayPic[a][b] * (byte) 8);
-//                            } else {
-//                                grayPic[a][b] = (byte) (grayPic[a][b] * (byte) -1);
-//                            }
                             sum = sum + grayPic[a][b] * mask[x][y];
                             y++;
                         }
@@ -389,15 +390,8 @@ class IMP implements MouseListener {
                 byte bSum = (byte) sum;
 
                 picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
-//                System.out.println(sum);
             }
         }
-
-//        try {
-//            Thread.sleep(1000);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
         resetPicture();
     }
 
@@ -436,6 +430,50 @@ class IMP implements MouseListener {
         }
 
         resetPicture();
+    }
+    
+    private void greenColorTracking(){
+        byte greenPic[][] = new byte[height][width];
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int rgbArray[] = new int[4];
+
+                rgbArray = getPixelArray(picture[i][j]);
+                greenPic[i][j] = (byte) rgbArray[2];
+            }
+        }
+        
+        int sum = 0;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                sum = 0;
+                if (i == 0 || j == 0 || j == width - 1 || i == height - 1) {
+                    sum = 0;
+                } else {
+                    int x = 0;
+                    for (int a = i - 1; a < i + 2; a++) {
+                        int y = 0;
+                        for (int b = j - 1; b < j + 2; b++) {
+                            sum = sum + greenPic[a][b] * mask[x][y];
+                            y++;
+                        }
+                        x++;
+                    }
+                }
+
+                if (sum > 255) {
+                    sum = 255;
+                }
+                if (sum < 0) {
+                    sum = 0;
+                }
+                byte bSum = (byte) sum;
+
+                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
+            }
+        }
+         resetPicture();
     }
 
     /*
