@@ -232,6 +232,7 @@ class IMP implements MouseListener {
     private void reset() {
         for (int i = 0; i < width * height; i++) {
             pixels[i] = results[i];
+            picture[i/width][i%width] = results[i];
         }
         Image img2 = toolkit.createImage(new MemoryImageSource(width, height, pixels, 0, width));
 
@@ -353,7 +354,7 @@ class IMP implements MouseListener {
                 grayPic[i][j] = grayPix;
 //                int[] newPixel = {grayPix, grayPix, grayPix,grayPix};
 //                picture[i][j] = getPixels(newPixel);
-                picture[i][j] = grayPix * 0x00010101;
+                picture[i][j] = (grayPix * 0x00010101) | 0xFF000000;
             }
 
         }
@@ -389,7 +390,7 @@ class IMP implements MouseListener {
                 }
                 byte bSum = (byte) sum;
 
-                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
+                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101) | 0xFF000000;
             }
         }
         resetPicture();
@@ -425,7 +426,7 @@ class IMP implements MouseListener {
                 }
                 byte bSum = (byte) sum;
 
-                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101);
+                picture[i][j] = (int) (((byte) (255 - bSum)) * 0x00010101) | 0xFF000000;
             }
         }
 
@@ -437,16 +438,15 @@ class IMP implements MouseListener {
         for(int i = 0; i < height; i++){
             for(int j = 0; j < width; j++){
                 int[] rgbArray = getPixelArray(picture[i][j]);
-                if(rgbArray[1] > 200 && rgbArray[2] > 100 && rgbArray[3] < 20){
-                    picture[i][j] = (int) 0x00FFFFFF;
+                if(rgbArray[1] > 200 && rgbArray[2] > 80 && rgbArray[2] < 150 && rgbArray[3] < 70){
+                    picture[i][j] = (int) 0xFF000000;
                 } else {
-                    picture[i][j] = (int) 0;
+                    picture[i][j] = (int) 0xFFFFFFFF;
                 }
 //                System.out.println(picture[i][j]);
             }
         }
-        
-         resetPicture();
+                resetPicture();
     }
 
     /*
